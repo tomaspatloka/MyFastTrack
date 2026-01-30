@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="cs">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>MyFastTrack Ultimate</title>
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1e1e1e">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <!-- Ikony a Fonty -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"
+        rel="stylesheet">
+
+    <!-- Knihovna pro Grafy -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Styly -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body class="dark-mode">
+    <div class="app-container">
+
+        <!-- HLAVIČKA -->
+        <header class="app-bar">
+            <div class="app-title-wrapper">
+                <span class="material-symbols-outlined app-logo">bolt</span>
+                <h1 class="app-title">MyFastTrack</h1>
+            </div>
+            <div class="header-actions">
+                <div class="user-badge" id="headerWeight"
+                    onclick="window.switchTab('weight', document.getElementById('tab-weight'))">-- kg</div>
+                <button class="icon-btn" onclick="window.switchTab('settings', null)">
+                    <span class="material-symbols-outlined">settings</span>
+                </button>
+            </div>
+        </header>
+
+        <main class="main-content">
+
+            <!-- 1. DASHBOARD -->
+            <div id="view-dashboard" class="view-section">
+                <div class="card text-center" id="dashboardCard">
+                    <div class="status-chip" id="statusBadge">Načítání...</div>
+
+                    <div class="timer-wrapper">
+                        <svg class="timer-svg" viewBox="0 0 100 100">
+                            <circle class="timer-bg" cx="50" cy="50" r="45"></circle>
+                            <circle class="timer-progress" id="timerCircle" cx="50" cy="50" r="45"></circle>
+                        </svg>
+                        <div class="timer-text">
+                            <span id="timerValue">--:--</span>
+                            <small id="timerLabel">načítám</small>
+                        </div>
+                    </div>
+
+                    <!-- Fáze půstu -->
+                    <div id="fastingPhaseContainer" class="phase-container hidden">
+                        <span class="material-symbols-outlined phase-icon">vital_signs</span>
+                        <div class="phase-info">
+                            <div class="phase-label">Aktuální fáze</div>
+                            <div class="phase-value" id="fastingPhaseText">--</div>
+                        </div>
+                    </div>
+
+                    <p id="subTimerText" class="motivation-text">Disciplína je svoboda.</p>
+                </div>
+
+                <!-- SOS Karta (zobrazí se jen při dlouhém půstu) -->
+                <div class="card sos-card hidden" id="sosCard">
+                    <div class="card-header text-danger">
+                        <span class="card-title"><span class="material-symbols-outlined">warning</span> KRIZE?</span>
+                    </div>
+                    <div class="sos-actions">
+                        <div class="sos-item">🧂 Sůl</div>
+                        <div class="sos-item">💧 Voda</div>
+                        <div class="sos-item">☕ Káva</div>
+                    </div>
+                </div>
+
+                <!-- Odkaz na jídelníček -->
+                <div class="card" onclick="window.switchTab('recipes', document.getElementById('tab-recipes'))"
+                    style="cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+                    <span class="card-title" style="margin:0"><span class="material-symbols-outlined">menu_book</span>
+                        Jídelníček</span>
+                    <span class="material-symbols-outlined">chevron_right</span>
+                </div>
+            </div>
+
+            <!-- 2. RECEPTY (14 DNÍ) -->
+            <div id="view-recipes" class="view-section hidden">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <h3 class="section-title">Plán na 14 dní</h3>
+                    <button class="icon-btn" onclick="openMealEditor()" style="margin-right:10px;"><span
+                            class="material-symbols-outlined">edit</span></button>
+                </div>
+                <div id="recipesContainer"></div>
+                <div class="text-center" style="margin-top: 20px;">
+                    <button onclick="resetMealPlan()" class="btn-text text-danger">Resetovat postup v jídle</button>
+                </div>
+            </div>
+
+            <!-- 3. VÁHA -->
+            <div id="view-weight" class="view-section hidden">
+                <div class="card">
+                    <div class="card-header"><span class="card-title"><span
+                                class="material-symbols-outlined">monitor_weight</span> Záznam váhy</span></div>
+                    <form id="weightForm" class="weight-form">
+                        <div class="input-group">
+                            <input type="number" id="weightInput" step="0.1" placeholder="Kg" required>
+                            <input type="date" id="dateInput" required>
+                        </div>
+                        <button type="submit" class="btn-primary">Uložit váhu</button>
+                    </form>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-box"><small>Cíl</small><strong id="statTarget">--</strong></div>
+                    <div class="stat-box"><small>Zbývá</small><strong id="statRemaining">--</strong></div>
+                    <div class="stat-box"><small>Změna</small><strong id="statTotal">--</strong></div>
+                </div>
+
+                <div class="card">
+                    <div style="height: 250px;">
+                        <canvas id="weightChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="text-center">
+                    <button onclick="clearWeightData()" class="btn-text text-danger">Smazat historii vážení</button>
+                </div>
+            </div>
+
+            <!-- 4. NÁKUP -->
+            <div id="view-shopping" class="view-section hidden">
+                <div class="card">
+                    <div class="card-header">Bílkoviny</div>
+                    <div id="shopList-protein"></div>
+                </div>
+                <div class="card">
+                    <div class="card-header">Ostatní</div>
+                    <div id="shopList-vege"></div>
+                </div>
+            </div>
+
+            <!-- 5. NASTAVENÍ -->
+            <div id="view-settings" class="view-section hidden">
+                <h3 class="section-title">Nastavení</h3>
+
+                <div class="card">
+                    <h4 class="card-header">Cíle</h4>
+                    <div class="form-group"><label>Startovní váha (kg)</label><input type="number" id="cfgStartWeight"
+                            class="form-input"></div>
+                    <div class="form-group"><label>Cílová váha (kg)</label><input type="number" id="cfgTargetWeight"
+                            class="form-input"></div>
+                </div>
+
+                <div class="card">
+                    <h4 class="card-header">Běžný den</h4>
+                    <div class="form-group">
+                        <label>Režim půstu</label>
+                        <select id="cfgFastingMode" class="form-input" onchange="updateFastingModeInputs()">
+                            <option value="custom">Vlastní</option>
+                            <option value="16:8">16:8 (Klasika)</option>
+                            <option value="18:6">18:6 (Pokročilý)</option>
+                            <option value="20:4">20:4 (Válečník)</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>Začátek jídla</label><input type="time" id="cfgEatingStart"
+                            class="form-input"></div>
+                    <div class="form-group"><label>Konec jídla</label><input type="time" id="cfgEatingEnd"
+                            class="form-input"></div>
+                </div>
+
+                <div class="card">
+                    <h4 class="card-header">Dlouhý půst</h4>
+                    <div class="form-group">
+                        <label>Den dlouhého půstu</label>
+                        <select id="cfgLongFastDay" class="form-input">
+                            <option value="1">Pondělí</option>
+                            <option value="2">Úterý</option>
+                            <option value="3">Středa</option>
+                            <option value="4">Čtvrtek</option>
+                            <option value="5">Pátek</option>
+                            <option value="6">Sobota</option>
+                            <option value="0">Neděle</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>Délka (hodin)</label><input type="number" id="cfgLongFastDuration"
+                            class="form-input"></div>
+                </div>
+
+                <div class="card">
+                    <h4 class="card-header">Notifikace</h4>
+                    <div class="form-group" style="display:flex; justify-content:space-between; align-items:center;">
+                        <label style="margin:0">Upozornění na půst</label>
+                        <button id="btnNotifications" class="btn-primary" style="padding: 6px 12px; font-size: 0.8rem;"
+                            onclick="toggleNotifications()">Zapnout</button>
+                    </div>
+
+                    <button onclick="saveSettings()" class="btn-primary full-width">Uložit a aplikovat</button>
+                    <div class="text-center" style="margin-top:20px">
+                        <button onclick="factoryReset()" class="btn-text text-danger">Tovární nastavení</button>
+                    </div>
+                </div>
+
+        </main>
+
+        <!-- MODAL: Editace Jídla -->
+        <div id="mealEditModal" class="modal hidden">
+            <div class="modal-content card">
+                <h3>Upravit jídlo</h3>
+                <form id="mealEditForm">
+                    <input type="hidden" id="editMealId">
+                    <input type="hidden" id="editMealDay">
+
+                    <div class="form-group">
+                        <label>Název jídla</label>
+                        <input type="text" id="editMealName" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Porce</label>
+                        <input type="text" id="editMealPortion" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label>Popis / Recept</label>
+                        <textarea id="editMealDesc" class="form-input" rows="3"
+                            style="font-family: inherit;"></textarea>
+                    </div>
+
+                    <div style="display:flex; gap:10px; margin-top:15px;">
+                        <button type="button" class="btn-text text-danger" onclick="closeMealEditor()">Zrušit</button>
+                        <button type="submit" class="btn-primary" style="flex:1;">Uložit</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <nav class="tabs-container">
+            <button class="tab active" onclick="window.switchTab('dashboard', this)"><span
+                    class="material-symbols-outlined">timer</span><span>Půst</span></button>
+            <button class="tab" id="tab-recipes" onclick="window.switchTab('recipes', this)"><span
+                    class="material-symbols-outlined">menu_book</span><span>Plán</span></button>
+            <button class="tab" id="tab-weight" onclick="window.switchTab('weight', this)"><span
+                    class="material-symbols-outlined">show_chart</span><span>Váha</span></button>
+            <button class="tab" onclick="window.switchTab('shopping', this)"><span
+                    class="material-symbols-outlined">shopping_cart</span><span>Nákup</span></button>
+        </nav>
+
+    </div>
+    <script src="js/app.js"></script>
+</body>
+
+</html>
