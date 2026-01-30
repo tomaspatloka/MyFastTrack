@@ -14,7 +14,9 @@ const defaultConfig = {
     eatingStart: "12:00",
     eatingEnd: "18:00",
     longFastDay: 5,       // 5 = Pátek
-    longFastDuration: 37
+    longFastDuration: 37,
+    userName: "",
+    userMotto: "Disciplína je svoboda."
 };
 
 let appConfig = JSON.parse(localStorage.getItem('ft_config')) || defaultConfig;
@@ -256,7 +258,7 @@ function renderTimerUI(isFasting, elapsedMins, totalDuration, statusText) {
         if (remaining > 0) {
             subTimerText.innerText = `Cíl za: ${formatTime(remaining)}`;
         } else {
-            subTimerText.innerText = "Cíl splněn! Pálíš tuky.";
+            subTimerText.innerText = appConfig.userMotto || "Disciplína je svoboda.";
         }
         setCircleProgress(elapsedMins, totalDuration, true);
     } else {
@@ -265,7 +267,7 @@ function renderTimerUI(isFasting, elapsedMins, totalDuration, statusText) {
         timerValue.innerText = formatTime(elapsedMins);
 
         phaseContainer.classList.add('hidden');
-        subTimerText.innerText = "Doplň kvalitní energii.";
+        subTimerText.innerText = appConfig.userMotto || "Doplň kvalitní energii.";
 
         const passed = totalDuration - elapsedMins;
         setCircleProgress(passed, totalDuration, false);
@@ -652,6 +654,9 @@ function initSettingsForm() {
     } else {
         modeEl.value = 'custom'; // Default fallback
     }
+
+    document.getElementById('cfgUserName').value = appConfig.userName || "";
+    document.getElementById('cfgUserMotto').value = appConfig.userMotto || "";
 }
 
 window.updateFastingModeInputs = function () {
@@ -680,6 +685,8 @@ window.saveSettings = function () {
     appConfig.longFastDay = parseInt(document.getElementById('cfgLongFastDay').value);
     appConfig.longFastDuration = parseInt(document.getElementById('cfgLongFastDuration').value);
     appConfig.fastingMode = document.getElementById('cfgFastingMode').value;
+    appConfig.userName = document.getElementById('cfgUserName').value;
+    appConfig.userMotto = document.getElementById('cfgUserMotto').value;
 
     localStorage.setItem('ft_config', JSON.stringify(appConfig));
 
