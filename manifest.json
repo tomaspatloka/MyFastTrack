@@ -9,12 +9,12 @@
   "description": "Aplikace pro sledování půstu a stravování",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/3063/3063822.png",
+      "src": "icon.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/3063/3063822.png",
+      "src": "icon.png",
       "sizes": "512x512",
       "type": "image/png"
     }

@@ -19,6 +19,9 @@ const defaultConfig = {
 
 let appConfig = JSON.parse(localStorage.getItem('ft_config')) || defaultConfig;
 let weightChartInstance = null;
+let deferredPrompt; // PWA Install Prompt
+let waterIntake = 0;
+let lastWaterDate = null;
 
 // DATA PRO JÍDELNÍČEK (14 DNÍ)
 // --- DATA PRO JÍDELNÍČEK (14 DNÍ) ---
@@ -71,6 +74,37 @@ document.addEventListener('DOMContentLoaded', () => {
     initWeightTracker();
     initSettingsForm();
     initNotifications(); // Check permissions
+    initWaterTracker(); // NOVÉ: Voda
+
+    // PWA Install
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        const card = document.getElementById('pwaInstallCard');
+        if (card) card.classList.remove('hidden');
+    });
+
+    document.getElementById('pwaInstallBtn').addEventListener('click', async () => {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+            deferredPrompt = null;
+            document.getElementById('pwaInstallCard').classList.add('hidden');
+        }
+    });
+
+    // PWA Installed Check
+    window.addEventListener('appinstalled', () => {
+        deferredPrompt = null;
+        document.getElementById('pwaInstallCard').classList.add('hidden');
+        alert('Děkujeme za instalaci!');
+    });
+
+    // Sync Status Listeners
+    window.addEventListener('online', () => updateSyncStatus('online'));
+    window.addEventListener('offline', () => updateSyncStatus('offline'));
+    updateSyncStatus(navigator.onLine ? 'online' : 'offline');
 
     updateTimer();
     setInterval(updateTimer, 1000);
@@ -483,6 +517,16 @@ function renderWeightChart() {
                 pointBorderColor: '#69f0ae',
                 fill: true,
                 tension: 0.3
+            },
+            {
+                label: 'Trend (7 dní)',
+                data: calculateTrendLine(viewData, 7),
+                borderColor: 'rgba(255, 255, 255, 0.3)',
+                borderWidth: 1,
+                borderDash: [5, 5],
+                pointRadius: 0,
+                fill: false,
+                tension: 0.4
             }]
         },
         options: {
@@ -497,6 +541,19 @@ function renderWeightChart() {
     });
 }
 
+function calculateTrendLine(data, period) {
+    // Simple Moving Average
+    let result = [];
+    for (let i = 0; i < data.length; i++) {
+        const start = Math.max(0, i - period + 1);
+        const subset = data.slice(start, i + 1);
+        const sum = subset.reduce((a, b) => a + b.weight, 0);
+        result.push(sum / subset.length);
+    }
+    return result;
+}
+
+
 window.clearWeightData = function () {
     if (confirm('Opravdu smazat historii vážení?')) {
         localStorage.removeItem('ft_weight');
@@ -505,6 +562,45 @@ window.clearWeightData = function () {
         syncToCloud();
     }
 };
+
+window.exportShoppingList = function () {
+    const proteins = [];
+    const others = [];
+
+    // Projdeme checkboxy v DOMu nebo LS. Lepší DOM, protože LS má ID.
+    document.querySelectorAll('#shopList-protein .shop-item:not(.checked) span').forEach(el => proteins.push(el.innerText));
+    document.querySelectorAll('#shopList-vege .shop-item:not(.checked) span').forEach(el => others.push(el.innerText));
+
+    if (proteins.length === 0 && others.length === 0) {
+        alert('Nákupní seznam je prázdný (nebo vše koupeno).');
+        return;
+    }
+
+    let text = "🛒 MyFastTrack Nákup:\n\n";
+    if (proteins.length > 0) text += "-- Bílkoviny --\n" + proteins.join('\n') + "\n\n";
+    if (others.length > 0) text += "-- Ostatní --\n" + others.join('\n');
+
+    if (navigator.share) {
+        navigator.share({
+            title: 'Můj nákup',
+            text: text
+        }).catch(err => {
+            console.log('Share failed', err);
+            copyToClipboard(text);
+        });
+    } else {
+        copyToClipboard(text);
+    }
+};
+
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        alert('Seznam zkopírován do schránky!');
+    }).catch(err => {
+        alert('Nelze zkopírovat: ' + err);
+    });
+}
+
 
 
 // --- MODUL NÁKUP ---
@@ -600,7 +696,48 @@ window.factoryReset = function () {
         localStorage.clear();
         location.reload();
     }
+}
 };
+
+// --- MODUL VODA ---
+function initWaterTracker() {
+    const savedDate = localStorage.getItem('ft_waterDate');
+    const today = new Date().toDateString();
+
+    if (savedDate !== today) {
+        waterIntake = 0;
+        localStorage.setItem('ft_waterDate', today);
+        localStorage.setItem('ft_waterVal', '0');
+    } else {
+        waterIntake = parseInt(localStorage.getItem('ft_waterVal')) || 0;
+    }
+    renderWater();
+}
+
+window.updateWater = function (change) {
+    waterIntake += change;
+    if (waterIntake < 0) waterIntake = 0;
+
+    localStorage.setItem('ft_waterVal', waterIntake.toString());
+    localStorage.setItem('ft_waterDate', new Date().toDateString());
+
+    renderWater();
+    syncToCloud(); // Sync after update
+};
+
+function renderWater() {
+    const amountEl = document.getElementById('waterAmount');
+    const countEl = document.getElementById('waterCount');
+
+    if (!amountEl || !countEl) return;
+
+    // 1 sklenice cca 250ml (0.25l)
+    const liters = (waterIntake * 0.25).toFixed(2);
+
+    amountEl.innerText = `${liters} l`;
+    countEl.innerText = waterIntake;
+}
+
 
 
 // --- NOTIFIKACE ---
@@ -659,32 +796,61 @@ function checkNotifications(isFasting, statusText) {
 }
 
 
-// --- CLOUDFLARE KV SYNC ---
+// --- SYNC STATUS UI ---
+function updateSyncStatus(status) {
+    const icon = document.getElementById('syncStatusIcon');
+    if (!icon) return;
+
+    icon.classList.remove('synced', 'syncing', 'offline');
+
+    if (status === 'online' || status === 'synced') {
+        icon.innerText = 'cloud_done';
+        icon.classList.add('synced');
+        icon.title = "Online & Synced";
+    } else if (status === 'syncing') {
+        icon.innerText = 'sync';
+        icon.classList.add('syncing');
+        icon.title = "Syncing...";
+    } else {
+        icon.innerText = 'cloud_off';
+        icon.classList.add('offline');
+        icon.title = "Offline (Local mode)";
+    }
+}
 
 async function syncToCloud() {
-    // Pokud nejsme na localhostu nebo pokud chceme testovat, odkomentujte
+    updateSyncStatus('syncing');
     const data = {
         config: appConfig,
         weight: JSON.parse(localStorage.getItem('ft_weight') || '[]'),
-        mealPlan: mealPlanData
+        mealPlan: mealPlanData,
+        water: { val: waterIntake, date: new Date().toDateString() } // Sync water too
     };
 
     try {
-        // Posíláme na API endpoint
         const res = await fetch('/api/sync', {
             method: 'POST',
             body: JSON.stringify(data),
             headers: { 'Content-Type': 'application/json' }
         });
-        if (res.ok) console.log('Synced to Cloud');
+        if (res.ok) {
+            console.log('Synced to Cloud');
+            updateSyncStatus('synced');
+        } else {
+            throw new Error('Sync Error');
+        }
     } catch (e) {
-        // Tiché selhání - pravděpodobně offline nebo běžíme lokálně bez serveru
         console.log('Sync skipped (Offline/Local)');
+        updateSyncStatus('offline');
     }
 }
 
 async function syncFromCloud() {
-    if (!navigator.onLine) return;
+    if (!navigator.onLine) {
+        updateSyncStatus('offline');
+        return;
+    }
+    updateSyncStatus('syncing');
 
     try {
         const res = await fetch('/api/sync');
@@ -702,15 +868,24 @@ async function syncFromCloud() {
                     mealPlanData = data.mealPlan;
                     localStorage.setItem('ft_mealPlan', JSON.stringify(mealPlanData));
                 }
-                // Refresh UI
+                // Water sync logic
+                if (data.water && data.water.date === new Date().toDateString()) {
+                    waterIntake = data.water.val;
+                    localStorage.setItem('ft_waterVal', waterIntake.toString());
+                    localStorage.setItem('ft_waterDate', data.water.date);
+                    renderWater();
+                }
+
                 initSettingsForm();
                 loadWeightData();
                 initRecipes();
                 updateTimer();
                 console.log('Data loaded from Cloud');
+                updateSyncStatus('synced');
             }
         }
     } catch (e) {
         console.log('Cloud load skipped');
+        updateSyncStatus('offline');
     }
 }

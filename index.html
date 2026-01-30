@@ -35,6 +35,7 @@
                 <h1 class="app-title">MyFastTrack</h1>
             </div>
             <div class="header-actions">
+                <span class="material-symbols-outlined status-icon" id="syncStatusIcon" title="Offline">cloud_off</span>
                 <div class="user-badge" id="headerWeight"
                     onclick="window.switchTab('weight', document.getElementById('tab-weight'))">-- kg</div>
                 <button class="icon-btn" onclick="window.switchTab('settings', null)">
@@ -71,6 +72,26 @@
                     </div>
 
                     <p id="subTimerText" class="motivation-text">Disciplína je svoboda.</p>
+                </div>
+
+                <!-- PITNÝ REŽIM -->
+                <div class="card" id="waterCard"
+                    style="display: flex; align-items: center; justify-content: space-between; padding: 15px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span class="material-symbols-outlined text-primary">water_drop</span>
+                        <div>
+                            <div style="font-weight: bold; font-size: 1.1rem;">Voda</div>
+                            <small id="waterAmount">0 l</small>
+                        </div>
+                    </div>
+                    <div class="water-controls" style="display: flex; align-items: center; gap: 10px;">
+                        <button class="icon-btn" onclick="updateWater(-1)"
+                            style="background: rgba(255,255,255,0.1); width: 32px; height: 32px;">-</button>
+                        <span id="waterCount"
+                            style="font-size: 1.2rem; font-weight: bold; min-width: 20px; text-align: center;">0</span>
+                        <button class="icon-btn" onclick="updateWater(1)"
+                            style="background: var(--color-primary); color: #000; width: 32px; height: 32px;">+</button>
+                    </div>
                 </div>
 
                 <!-- SOS Karta (zobrazí se jen při dlouhém půstu) -->
@@ -150,66 +171,82 @@
                 </div>
             </div>
 
-            <!-- 5. NASTAVENÍ -->
-            <div id="view-settings" class="view-section hidden">
-                <h3 class="section-title">Nastavení</h3>
+            <div class="text-center" style="margin-top: 15px;">
+                <button onclick="exportShoppingList()" class="btn-primary"
+                    style="display: inline-flex; align-items: center; gap: 8px;">
+                    <span class="material-symbols-outlined">share</span> Sdílet nákup
+                </button>
+            </div>
+    </div>
 
-                <div class="card">
-                    <h4 class="card-header">Cíle</h4>
-                    <div class="form-group"><label>Startovní váha (kg)</label><input type="number" id="cfgStartWeight"
-                            class="form-input"></div>
-                    <div class="form-group"><label>Cílová váha (kg)</label><input type="number" id="cfgTargetWeight"
-                            class="form-input"></div>
-                </div>
+    <!-- 5. NASTAVENÍ -->
+    <div id="view-settings" class="view-section hidden">
+        <h3 class="section-title">Nastavení</h3>
 
-                <div class="card">
-                    <h4 class="card-header">Běžný den</h4>
-                    <div class="form-group">
-                        <label>Režim půstu</label>
-                        <select id="cfgFastingMode" class="form-input" onchange="updateFastingModeInputs()">
-                            <option value="custom">Vlastní</option>
-                            <option value="16:8">16:8 (Klasika)</option>
-                            <option value="18:6">18:6 (Pokročilý)</option>
-                            <option value="20:4">20:4 (Válečník)</option>
-                        </select>
-                    </div>
-                    <div class="form-group"><label>Začátek jídla</label><input type="time" id="cfgEatingStart"
-                            class="form-input"></div>
-                    <div class="form-group"><label>Konec jídla</label><input type="time" id="cfgEatingEnd"
-                            class="form-input"></div>
-                </div>
+        <div class="card">
+            <h4 class="card-header">Cíle</h4>
+            <div class="form-group"><label>Startovní váha (kg)</label><input type="number" id="cfgStartWeight"
+                    class="form-input"></div>
+            <div class="form-group"><label>Cílová váha (kg)</label><input type="number" id="cfgTargetWeight"
+                    class="form-input"></div>
+        </div>
 
-                <div class="card">
-                    <h4 class="card-header">Dlouhý půst</h4>
-                    <div class="form-group">
-                        <label>Den dlouhého půstu</label>
-                        <select id="cfgLongFastDay" class="form-input">
-                            <option value="1">Pondělí</option>
-                            <option value="2">Úterý</option>
-                            <option value="3">Středa</option>
-                            <option value="4">Čtvrtek</option>
-                            <option value="5">Pátek</option>
-                            <option value="6">Sobota</option>
-                            <option value="0">Neděle</option>
-                        </select>
-                    </div>
-                    <div class="form-group"><label>Délka (hodin)</label><input type="number" id="cfgLongFastDuration"
-                            class="form-input"></div>
-                </div>
+        <div class="card">
+            <h4 class="card-header">Běžný den</h4>
+            <div class="form-group">
+                <label>Režim půstu</label>
+                <select id="cfgFastingMode" class="form-input" onchange="updateFastingModeInputs()">
+                    <option value="custom">Vlastní</option>
+                    <option value="16:8">16:8 (Klasika)</option>
+                    <option value="18:6">18:6 (Pokročilý)</option>
+                    <option value="20:4">20:4 (Válečník)</option>
+                </select>
+            </div>
+            <div class="form-group"><label>Začátek jídla</label><input type="time" id="cfgEatingStart"
+                    class="form-input"></div>
+            <div class="form-group"><label>Konec jídla</label><input type="time" id="cfgEatingEnd" class="form-input">
+            </div>
+        </div>
 
-                <div class="card">
-                    <h4 class="card-header">Notifikace</h4>
-                    <div class="form-group" style="display:flex; justify-content:space-between; align-items:center;">
-                        <label style="margin:0">Upozornění na půst</label>
-                        <button id="btnNotifications" class="btn-primary" style="padding: 6px 12px; font-size: 0.8rem;"
-                            onclick="toggleNotifications()">Zapnout</button>
-                    </div>
+        <div class="card">
+            <h4 class="card-header">Dlouhý půst</h4>
+            <div class="form-group">
+                <label>Den dlouhého půstu</label>
+                <select id="cfgLongFastDay" class="form-input">
+                    <option value="1">Pondělí</option>
+                    <option value="2">Úterý</option>
+                    <option value="3">Středa</option>
+                    <option value="4">Čtvrtek</option>
+                    <option value="5">Pátek</option>
+                    <option value="6">Sobota</option>
+                    <option value="0">Neděle</option>
+                </select>
+            </div>
+            <div class="form-group"><label>Délka (hodin)</label><input type="number" id="cfgLongFastDuration"
+                    class="form-input"></div>
+        </div>
 
-                    <button onclick="saveSettings()" class="btn-primary full-width">Uložit a aplikovat</button>
-                    <div class="text-center" style="margin-top:20px">
-                        <button onclick="factoryReset()" class="btn-text text-danger">Tovární nastavení</button>
-                    </div>
-                </div>
+        <div class="card">
+            <h4 class="card-header">Notifikace</h4>
+            <div class="form-group" style="display:flex; justify-content:space-between; align-items:center;">
+                <label style="margin:0">Upozornění na půst</label>
+                <button id="btnNotifications" class="btn-primary" style="padding: 6px 12px; font-size: 0.8rem;"
+                    onclick="toggleNotifications()">Zapnout</button>
+            </div>
+
+            <button onclick="saveSettings()" class="btn-primary full-width">Uložit a aplikovat</button>
+            <div class="text-center" style="margin-top:20px">
+                <button onclick="factoryReset()" class="btn-text text-danger">Tovární nastavení</button>
+            </div>
+        </div>
+
+        <div class="card hidden" id="pwaInstallCard">
+            <h4 class="card-header">Aplikace</h4>
+            <p style="margin-bottom: 10px; font-size: 0.9rem; color: #888;">Nainstalujte si MyFastTrack na plochu pro
+                lepší zážitek.</p>
+            <button id="pwaInstallBtn" class="btn-primary full-width">Instalovat aplikaci</button>
+        </div>
+
 
         </main>
 

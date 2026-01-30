@@ -1,9 +1,10 @@
-const CACHE_NAME = 'fasttrack-v4-features';
+const CACHE_NAME = 'fasttrack-v5-pwa';
 const ASSETS = [
   './',
   './index.html',
   './css/style.css',
   './js/app.js',
+  './icon.png',
   './manifest.json',
   'https://cdn.jsdelivr.net/npm/chart.js',
   'https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap',
