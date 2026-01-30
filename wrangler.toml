@@ -6,7 +6,8 @@ compatibility_date = "2024-01-30"
 # Musíte vytvořit KV namespace příkazem: npx wrangler kv:namespace create DO_DATA
 # a nahradit ID níže.
 
-[[kv_namespaces]]
-binding = "FASTTRACK_KV"
-id = "YOUR_KV_NAMESPACE_ID_HERE"
-preview_id = "YOUR_PREVIEW_ID_HERE"
+# Bindings jsou nastaveny v Cloudflare Dashboardu (Settings -> Functions/Bindings)
+# [[kv_namespaces]]
+# binding = "FASTTRACK_KV"
+# id = "YOUR_KV_NAMESPACE_ID_HERE"
+# preview_id = "YOUR_PREVIEW_ID_HERE"
