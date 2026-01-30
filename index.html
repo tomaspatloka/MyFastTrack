@@ -183,60 +183,108 @@
     <div id="view-settings" class="view-section hidden">
         <h3 class="section-title">Nastavení</h3>
 
+        <!-- PROFÍL -->
         <div class="card">
-            <h4 class="card-header">Cíle</h4>
-            <div class="form-group"><label>Startovní váha (kg)</label><input type="number" id="cfgStartWeight"
-                    class="form-input"></div>
-            <div class="form-group"><label>Cílová váha (kg)</label><input type="number" id="cfgTargetWeight"
-                    class="form-input"></div>
+            <h4 class="card-header">Váš Profil</h4>
+            <div class="form-group">
+                <label>Jméno / Přezdívka</label>
+                <input type="text" id="cfgUserName" class="form-input" placeholder="Tvé jméno">
+            </div>
+            <div class="form-group">
+                <label>Osobní Motto</label>
+                <input type="text" id="cfgUserMotto" class="form-input" placeholder="Co tě motivuje?">
+            </div>
         </div>
 
+        <!-- CÍLE (Kompaktní) -->
         <div class="card">
-            <h4 class="card-header">Běžný den</h4>
+            <h4 class="card-header">Cíle</h4>
+            <div class="input-group">
+                <div class="form-group" style="flex:1">
+                    <label>Start (kg)</label>
+                    <input type="number" id="cfgStartWeight" class="form-input">
+                </div>
+                <div class="form-group" style="flex:1">
+                    <label>Cíl (kg)</label>
+                    <input type="number" id="cfgTargetWeight" class="form-input">
+                </div>
+            </div>
+        </div>
+
+        <!-- PŮST (Kompaktní) -->
+        <div class="card">
+            <h4 class="card-header">Režim Půstu</h4>
             <div class="form-group">
-                <label>Režim půstu</label>
                 <select id="cfgFastingMode" class="form-input" onchange="updateFastingModeInputs()">
-                    <option value="custom">Vlastní</option>
+                    <option value="custom">Vlastní nastavení času</option>
                     <option value="16:8">16:8 (Klasika)</option>
                     <option value="18:6">18:6 (Pokročilý)</option>
                     <option value="20:4">20:4 (Válečník)</option>
                 </select>
             </div>
-            <div class="form-group"><label>Začátek jídla</label><input type="time" id="cfgEatingStart"
-                    class="form-input"></div>
-            <div class="form-group"><label>Konec jídla</label><input type="time" id="cfgEatingEnd" class="form-input">
+            <div class="input-group">
+                <div class="form-group" style="flex:1">
+                    <label>První jídlo</label>
+                    <input type="time" id="cfgEatingStart" class="form-input">
+                </div>
+                <div class="form-group" style="flex:1">
+                    <label>Poslední jídlo</label>
+                    <input type="time" id="cfgEatingEnd" class="form-input">
+                </div>
             </div>
         </div>
 
+        <!-- DLOUHÝ PŮST (Kompaktní) -->
         <div class="card">
-            <h4 class="card-header">Dlouhý půst</h4>
-            <div class="form-group">
-                <label>Den dlouhého půstu</label>
-                <select id="cfgLongFastDay" class="form-input">
-                    <option value="1">Pondělí</option>
-                    <option value="2">Úterý</option>
-                    <option value="3">Středa</option>
-                    <option value="4">Čtvrtek</option>
-                    <option value="5">Pátek</option>
-                    <option value="6">Sobota</option>
-                    <option value="0">Neděle</option>
-                </select>
+            <h4 class="card-header">Dlouhý půst (Jednou týdně)</h4>
+            <div class="input-group">
+                <div class="form-group" style="flex:2">
+                    <label>Den</label>
+                    <select id="cfgLongFastDay" class="form-input">
+                        <option value="1">Pondělí</option>
+                        <option value="2">Úterý</option>
+                        <option value="3">Středa</option>
+                        <option value="4">Čtvrtek</option>
+                        <option value="5">Pátek</option>
+                        <option value="6">Sobota</option>
+                        <option value="0">Neděle</option>
+                    </select>
+                </div>
+                <div class="form-group" style="flex:1">
+                    <label>Délka (h)</label>
+                    <input type="number" id="cfgLongFastDuration" class="form-input">
+                </div>
             </div>
-            <div class="form-group"><label>Délka (hodin)</label><input type="number" id="cfgLongFastDuration"
-                    class="form-input"></div>
         </div>
 
+        <!-- NOTIFIKACE -->
         <div class="card">
-            <h4 class="card-header">Notifikace</h4>
-            <div class="form-group" style="display:flex; justify-content:space-between; align-items:center;">
-                <label style="margin:0">Upozornění na půst</label>
+            <div class="form-group"
+                style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0;">
+                <span style="font-weight:bold; color:var(--color-text-dim)">Notifikace</span>
                 <button id="btnNotifications" class="btn-primary" style="padding: 6px 12px; font-size: 0.8rem;"
                     onclick="toggleNotifications()">Zapnout</button>
             </div>
+        </div>
 
-            <button onclick="saveSettings()" class="btn-primary full-width">Uložit a aplikovat</button>
-            <div class="text-center" style="margin-top:20px">
-                <button onclick="factoryReset()" class="btn-text text-danger">Tovární nastavení</button>
+        <!-- AKCE -->
+        <div class="card" style="border-color: var(--color-primary);">
+            <button onclick="saveSettings()" class="btn-primary full-width">ULOŽIT ZMĚNY</button>
+        </div>
+
+        <!-- DATA & ZÁLOHA -->
+        <div class="card">
+            <h4 class="card-header">Správa Dat</h4>
+            <div style="display:flex; gap:10px; margin-bottom:10px;">
+                <button onclick="exportData()" class="btn-primary"
+                    style="flex:1; background:#444; border:1px solid #666;">Export (Záloha)</button>
+                <button onclick="document.getElementById('importFile').click()" class="btn-primary"
+                    style="flex:1; background:#444; border:1px solid #666;">Import</button>
+                <input type="file" id="importFile" style="display:none" onchange="importData(this)">
+            </div>
+            <div class="text-center">
+                <button onclick="factoryReset()" class="btn-text text-danger" style="font-size:0.8rem">Vymazat všechna
+                    data</button>
             </div>
         </div>
 
