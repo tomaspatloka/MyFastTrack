@@ -605,8 +605,7 @@ function copyToClipboard(text) {
 
 
 
-    }
-}
+
 
 window.exportData = function () {
     const data = {
