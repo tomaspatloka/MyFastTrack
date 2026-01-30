@@ -697,7 +697,7 @@ window.factoryReset = function () {
         location.reload();
     }
 }
-};
+
 
 // --- MODUL VODA ---
 function initWaterTracker() {
