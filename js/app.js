@@ -605,6 +605,59 @@ function copyToClipboard(text) {
 
 
 
+    }
+}
+
+window.exportData = function () {
+    const data = {
+        config: appConfig,
+        weight: JSON.parse(localStorage.getItem('ft_weight') || '[]'),
+        mealPlan: mealPlanData,
+        water: { val: waterIntake, date: new Date().toDateString() },
+        exportedAt: new Date().toISOString()
+    };
+
+    const json = JSON.stringify(data, null, 2);
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `myfasttrack_backup_${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+};
+
+window.importData = function (input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function (e) {
+        try {
+            const data = JSON.parse(e.target.result);
+
+            if (confirm(`Nalezeny data z ${data.exportedAt || 'neznámého data'}. Chcete je obnovit? Přepíše to současný stav.`)) {
+                if (data.config) localStorage.setItem('ft_config', JSON.stringify(data.config));
+                if (data.weight) localStorage.setItem('ft_weight', JSON.stringify(data.weight));
+                if (data.mealPlan) localStorage.setItem('ft_mealPlan', JSON.stringify(data.mealPlan));
+                if (data.water) {
+                    localStorage.setItem('ft_waterVal', data.water.val);
+                    localStorage.setItem('ft_waterDate', data.water.date);
+                }
+
+                alert('Data obnovena! Aplikace se reloadne.');
+                location.reload();
+            }
+        } catch (err) {
+            alert('Chyba při čtení souboru: ' + err);
+        }
+    };
+    reader.readAsText(file);
+    input.value = ''; // Reset input
+};
+
 // --- MODUL NÁKUP ---
 
 function initShoppingList() {
