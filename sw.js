@@ -1,10 +1,11 @@
-const CACHE_NAME = 'fasttrack-v6-pwa';
+const CACHE_NAME = 'fasttrack-v7-pwa';
 const CORE_ASSETS = [
   './',
   './index.html',
   './css/style.css',
   './js/app.js',
   './icon.png',
+  './icon.svg',
   './manifest.json'
 ];
 

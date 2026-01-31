@@ -2,7 +2,7 @@
  * MyFastTrack V3 - Kompletní aplikační logika
  */
 
-const APP_VERSION = '1.0.1';
+const APP_VERSION = '1.1.0';
 
 // Registrace Service Workeru
 if ('serviceWorker' in navigator) {
@@ -153,6 +153,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Zobrazit verzi aplikace
     const versionEl = document.getElementById('appVersion');
     if (versionEl) versionEl.innerText = `Verze: ${APP_VERSION}`;
+    const headerVersionEl = document.getElementById('headerVersion');
+    if (headerVersionEl) headerVersionEl.innerText = `v${APP_VERSION}`;
 
     // Modal Close handlers
     document.getElementById('mealEditForm').addEventListener('submit', saveMealEdit);

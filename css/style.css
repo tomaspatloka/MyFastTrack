@@ -108,6 +108,15 @@ body {
     font-weight: 700;
 }
 
+.app-version {
+    font-size: 0.6rem;
+    color: var(--color-primary);
+    background: rgba(105, 240, 174, 0.15);
+    padding: 2px 6px;
+    border-radius: 8px;
+    font-weight: 500;
+}
+
 .header-actions {
     display: flex;
     align-items: center;
