@@ -1,7 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
 
 :root {
-    /* Color Palette */
+    /* Color Palette - Dark Mode (default) */
     --color-bg: #121212;
     --color-surface: #1e1e1e;
     --color-primary: #9fa8da;
@@ -17,6 +17,46 @@
     --color-input-bg: #2c2c2c;
 
     --radius-md: 16px;
+}
+
+/* Light Mode */
+body.light-mode {
+    --color-bg: #f5f5f5;
+    --color-surface: #ffffff;
+    --color-primary: #5c6bc0;
+    --color-accent: #00c853;
+    --color-danger: #d32f2f;
+    --color-blue: #1976d2;
+    --color-text: #212121;
+    --color-text-dim: #666666;
+    --color-border: #e0e0e0;
+    --color-input-bg: #f0f0f0;
+}
+
+body.light-mode .card {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+body.light-mode .app-bar {
+    background: #ffffff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+body.light-mode .tabs-container {
+    background: #ffffff;
+    border-top: 1px solid var(--color-border);
+}
+
+body.light-mode .timer-bg {
+    stroke: #e0e0e0;
+}
+
+body.light-mode .streak-card {
+    background: linear-gradient(135deg, rgba(255, 152, 0, 0.1), rgba(255, 87, 34, 0.05));
+}
+
+body.light-mode .btn-primary {
+    color: #fff;
 }
 
 * {
@@ -215,6 +255,52 @@ body {
     align-items: center;
     gap: 8px;
     color: var(--color-text-dim);
+}
+
+/* Theme Toggle */
+.theme-toggle {
+    display: flex;
+    align-items: center;
+    background: var(--color-input-bg);
+    border-radius: 20px;
+    padding: 4px;
+    position: relative;
+    cursor: pointer;
+    width: 80px;
+    height: 36px;
+}
+
+.theme-option {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1;
+    color: var(--color-text-dim);
+    transition: color 0.3s ease;
+}
+
+.theme-option .material-symbols-outlined {
+    font-size: 20px;
+}
+
+.theme-slider {
+    position: absolute;
+    width: 36px;
+    height: 28px;
+    background: var(--color-primary);
+    border-radius: 14px;
+    transition: transform 0.3s ease;
+    left: 4px;
+}
+
+body.light-mode .theme-slider {
+    transform: translateX(36px);
+}
+
+body.dark-mode .theme-option[data-theme="dark"],
+body.light-mode .theme-option[data-theme="light"] {
+    color: #fff;
 }
 
 .form-group {
