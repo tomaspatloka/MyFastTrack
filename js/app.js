@@ -24,6 +24,7 @@ let weightChartInstance = null;
 let deferredPrompt; // PWA Install Prompt
 let waterIntake = 0;
 let lastWaterDate = null;
+let timerDisplayMode = 'elapsed'; // 'elapsed' = uplynulo, 'remaining' = zbývá
 
 // DATA PRO JÍDELNÍČEK (14 DNÍ)
 // --- DATA PRO JÍDELNÍČEK (14 DNÍ) ---
@@ -236,6 +237,18 @@ function updateTimer() {
     renderTimerUI(isFasting, elapsedMins, totalDuration, statusText);
 }
 
+// Přepínání zobrazení timeru (kliknutím)
+window.toggleTimerDisplay = function() {
+    timerDisplayMode = timerDisplayMode === 'elapsed' ? 'remaining' : 'elapsed';
+    // Vizuální feedback
+    const timerWrapper = document.querySelector('.timer-wrapper');
+    if (timerWrapper) {
+        timerWrapper.classList.add('timer-tap');
+        setTimeout(() => timerWrapper.classList.remove('timer-tap'), 150);
+    }
+    updateTimer(); // Okamžitá aktualizace
+};
+
 function renderTimerUI(isFasting, elapsedMins, totalDuration, statusText) {
     const dashboardCard = document.getElementById('dashboardCard');
     const timerValue = document.getElementById('timerValue');
@@ -246,19 +259,31 @@ function renderTimerUI(isFasting, elapsedMins, totalDuration, statusText) {
 
     statusBadge.innerText = statusText;
 
+    const remaining = totalDuration - elapsedMins;
+
     if (isFasting) {
         dashboardCard.className = "card text-center status-fasting";
-        timerLabel.innerText = "UPLYNULO";
-        timerValue.innerText = formatTime(elapsedMins);
-
         phaseContainer.classList.remove('hidden');
         document.getElementById('fastingPhaseText').innerText = getFastingPhase(elapsedMins);
 
-        const remaining = totalDuration - elapsedMins;
-        if (remaining > 0) {
-            subTimerText.innerText = `Cíl za: ${formatTime(remaining)}`;
+        // Přepínatelný režim zobrazení
+        if (timerDisplayMode === 'elapsed') {
+            timerLabel.innerText = "UPLYNULO";
+            timerValue.innerText = formatTime(elapsedMins);
+            if (remaining > 0) {
+                subTimerText.innerText = `Zbývá: ${formatTime(remaining)}`;
+            } else {
+                subTimerText.innerText = appConfig.userMotto || "Disciplína je svoboda.";
+            }
         } else {
-            subTimerText.innerText = appConfig.userMotto || "Disciplína je svoboda.";
+            timerLabel.innerText = "ZBÝVÁ";
+            if (remaining > 0) {
+                timerValue.innerText = formatTime(remaining);
+                subTimerText.innerText = `Uplynulo: ${formatTime(elapsedMins)}`;
+            } else {
+                timerValue.innerText = "0:00";
+                subTimerText.innerText = appConfig.userMotto || "Cíl splněn!";
+            }
         }
         setCircleProgress(elapsedMins, totalDuration, true);
     } else {

@@ -311,6 +311,14 @@ select.form-input {
     width: 220px;
     height: 220px;
     margin: 20px auto;
+    cursor: pointer;
+    transition: transform 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.timer-wrapper:active,
+.timer-wrapper.timer-tap {
+    transform: scale(0.96);
 }
 
 .timer-svg {
