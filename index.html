@@ -61,6 +61,9 @@
                         <div class="timer-text">
                             <span id="timerValue">--:--</span>
                             <small id="timerLabel">načítám</small>
+                            <span class="timer-toggle-hint">
+                                <span class="material-symbols-outlined">swap_vert</span>
+                            </span>
                         </div>
                     </div>
 
@@ -74,6 +77,20 @@
                     </div>
 
                     <p id="subTimerText" class="motivation-text">--</p>
+                </div>
+
+                <!-- STREAK COUNTER -->
+                <div class="card streak-card" id="streakCard">
+                    <div class="streak-content">
+                        <span class="material-symbols-outlined streak-icon">local_fire_department</span>
+                        <div class="streak-info">
+                            <span class="streak-count" id="streakCount">0</span>
+                            <span class="streak-label">dní v řadě</span>
+                        </div>
+                    </div>
+                    <div class="streak-best">
+                        Rekord: <span id="streakBest">0</span> dní
+                    </div>
                 </div>
 
                 <!-- PITNÝ REŽIM -->
@@ -253,6 +270,21 @@
                         <div class="form-group" style="flex:1">
                             <label>Délka (h)</label>
                             <input type="number" id="cfgLongFastDuration" class="form-input">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PITNÝ REŽIM -->
+                <div class="card">
+                    <h4 class="card-header">Pitný režim</h4>
+                    <div class="input-group">
+                        <div class="form-group" style="flex:1">
+                            <label>Sklenice (ml)</label>
+                            <input type="number" id="cfgWaterGlass" class="form-input" min="100" max="500" step="50">
+                        </div>
+                        <div class="form-group" style="flex:1">
+                            <label>Cíl (sklenic)</label>
+                            <input type="number" id="cfgWaterGoal" class="form-input" min="4" max="20">
                         </div>
                     </div>
                 </div>

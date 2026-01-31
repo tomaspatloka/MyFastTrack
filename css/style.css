@@ -375,6 +375,23 @@ select.form-input {
     letter-spacing: 2px;
 }
 
+.timer-toggle-hint {
+    display: block;
+    margin-top: 8px;
+    opacity: 0.4;
+    transition: opacity 0.2s ease;
+}
+
+.timer-toggle-hint .material-symbols-outlined {
+    font-size: 18px;
+    color: var(--color-primary);
+}
+
+.timer-wrapper:hover .timer-toggle-hint,
+.timer-wrapper:active .timer-toggle-hint {
+    opacity: 1;
+}
+
 /* Phase Display (NOVÉ) */
 .phase-container {
     background: rgba(255, 255, 255, 0.03);
@@ -409,6 +426,51 @@ select.form-input {
     font-weight: bold;
     font-size: 0.95rem;
     color: var(--color-blue);
+}
+
+/* Streak Counter */
+.streak-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px !important;
+    background: linear-gradient(135deg, rgba(255, 152, 0, 0.15), rgba(255, 87, 34, 0.1));
+    border: 1px solid rgba(255, 152, 0, 0.3);
+}
+
+.streak-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.streak-icon {
+    font-size: 32px;
+    color: #ff9800;
+}
+
+.streak-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.streak-count {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #ff9800;
+    line-height: 1;
+}
+
+.streak-label {
+    font-size: 0.75rem;
+    color: var(--color-text-dim);
+    text-transform: uppercase;
+}
+
+.streak-best {
+    font-size: 0.75rem;
+    color: var(--color-text-dim);
+    text-align: right;
 }
 
 /* Status Logic & Colors */

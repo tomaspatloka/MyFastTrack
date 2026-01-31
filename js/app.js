@@ -2,7 +2,15 @@
  * MyFastTrack V3 - Kompletní aplikační logika
  */
 
-const APP_VERSION = '1.1.0';
+const APP_VERSION = '1.2.0';
+
+// Bezpečnostní helper - escapování HTML (prevence XSS)
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
 
 // Registrace Service Workeru
 if ('serviceWorker' in navigator) {
@@ -49,7 +57,9 @@ const defaultConfig = {
     longFastDay: 5,       // 5 = Pátek
     longFastDuration: 37,
     userName: "",
-    userMotto: "Disciplína je svoboda."
+    userMotto: "Disciplína je svoboda.",
+    waterGlassSize: 250,  // ml na sklenici
+    waterGoal: 8          // počet sklenic denně
 };
 
 let appConfig = JSON.parse(localStorage.getItem('ft_config')) || defaultConfig;
@@ -58,6 +68,11 @@ let deferredPrompt; // PWA Install Prompt
 let waterIntake = 0;
 let lastWaterDate = null;
 let timerDisplayMode = 'elapsed'; // 'elapsed' = uplynulo, 'remaining' = zbývá
+
+// Streak tracking
+let currentStreak = parseInt(localStorage.getItem('ft_streak') || '0');
+let bestStreak = parseInt(localStorage.getItem('ft_streakBest') || '0');
+let lastStreakDate = localStorage.getItem('ft_streakDate') || '';
 
 // DATA PRO JÍDELNÍČEK (14 DNÍ)
 // --- DATA PRO JÍDELNÍČEK (14 DNÍ) ---
@@ -110,7 +125,8 @@ document.addEventListener('DOMContentLoaded', () => {
     initWeightTracker();
     initSettingsForm();
     initNotifications(); // Check permissions
-    initWaterTracker(); // NOVÉ: Voda
+    initWaterTracker(); // Voda
+    initStreak(); // Streak tracking
 
     // PWA Install
     window.addEventListener('beforeinstallprompt', (e) => {
@@ -272,6 +288,11 @@ function updateTimer() {
     // NOTIFIKACE Check (Simple implementation)
     checkNotifications(isFasting, statusText);
 
+    // Streak: počítej úspěšný den když začne jídelní okno
+    if (!isFasting && statusText === "JÍDLO") {
+        updateStreak();
+    }
+
     // Render UI
     renderTimerUI(isFasting, elapsedMins, totalDuration, statusText);
 }
@@ -387,26 +408,31 @@ function initRecipes() {
 
     mealPlanData.forEach(day => {
         const allDone = day.meals.every(m => localStorage.getItem('recipe_' + m.id) === 'true');
+        const safeTitle = escapeHtml(day.title) || 'Den ' + day.day;
 
         const dayHtml = `
             <div class="day-card ${isEditingMeals ? 'editing' : ''}" id="dayCard_${day.day}">
                 <div class="day-header ${allDone ? 'completed' : ''}" onclick="toggleDay(${day.day})">
-                    <span>${day.title || 'Den ' + day.day}</span>
+                    <span>${safeTitle}</span>
                     <span class="material-symbols-outlined">${allDone ? 'check_circle' : 'expand_more'}</span>
                 </div>
                 <div class="day-content">
                     ${day.meals.map(meal => {
             const isChecked = localStorage.getItem('recipe_' + meal.id) === 'true';
+            const safeName = escapeHtml(meal.name);
+            const safeType = escapeHtml(meal.type);
+            const safePortion = escapeHtml(meal.portion);
+            const safeDesc = escapeHtml(meal.desc);
             return `
-                        <div class="recipe-item ${isChecked ? 'checked' : ''}" onclick="handleMealClick('${meal.id}', ${day.day})">
+                        <div class="recipe-item ${isChecked ? 'checked' : ''}" onclick="handleMealClick('${escapeHtml(meal.id)}', ${day.day})">
                             <div class="recipe-title">
                                 ${isEditingMeals
                     ? '<span class="material-symbols-outlined" style="margin-right:10px; color:var(--color-primary)">edit</span>'
                     : '<div class="recipe-checkbox"></div>'}
-                                <span>${meal.name}</span>
+                                <span>${safeName}</span>
                             </div>
-                            <div class="recipe-meta">${meal.type} • ${meal.portion}</div>
-                            <div class="recipe-desc">${meal.desc}</div>
+                            <div class="recipe-meta">${safeType} • ${safePortion}</div>
+                            <div class="recipe-desc">${safeDesc}</div>
                         </div>
                         `;
         }).join('')}
@@ -518,7 +544,16 @@ function addWeightEntry() {
     const wVal = parseFloat(document.getElementById('weightInput').value);
     const dVal = document.getElementById('dateInput').value;
 
-    if (!wVal || !dVal) return;
+    if (!wVal || !dVal) {
+        alert('Vyplňte váhu a datum.');
+        return;
+    }
+
+    // Validace váhy (rozumný rozsah 30-300 kg)
+    if (wVal < 30 || wVal > 300) {
+        alert('Váha musí být mezi 30 a 300 kg.');
+        return;
+    }
 
     let history = getWeightHistory();
     const index = history.findIndex(x => x.date === dVal);
@@ -734,11 +769,12 @@ function initShoppingList() {
         arr.forEach(item => {
             const uid = 'shop_' + item.replace(/[^a-z0-9]/gi, '');
             const isChecked = localStorage.getItem(uid) === 'true';
+            const safeItem = escapeHtml(item);
 
             el.innerHTML += `
                 <div class="shop-item ${isChecked ? 'checked' : ''}" onclick="toggleShop(this, '${uid}')">
                     <div class="checkbox-circle"></div>
-                    <span>${item}</span>
+                    <span>${safeItem}</span>
                 </div>
             `;
         });
@@ -773,6 +809,10 @@ function initSettingsForm() {
 
     document.getElementById('cfgUserName').value = appConfig.userName || "";
     document.getElementById('cfgUserMotto').value = appConfig.userMotto || "";
+
+    // Nastavení vody
+    document.getElementById('cfgWaterGlass').value = appConfig.waterGlassSize || 250;
+    document.getElementById('cfgWaterGoal').value = appConfig.waterGoal || 8;
 }
 
 window.updateFastingModeInputs = function () {
@@ -794,20 +834,52 @@ window.updateFastingModeInputs = function () {
 };
 
 window.saveSettings = function () {
-    appConfig.startWeight = parseFloat(document.getElementById('cfgStartWeight').value) || 0;
-    appConfig.targetWeight = parseFloat(document.getElementById('cfgTargetWeight').value) || 0;
-    appConfig.eatingStart = document.getElementById('cfgEatingStart').value;
-    appConfig.eatingEnd = document.getElementById('cfgEatingEnd').value;
+    // Validace vstupů
+    const startWeight = parseFloat(document.getElementById('cfgStartWeight').value);
+    const targetWeight = parseFloat(document.getElementById('cfgTargetWeight').value);
+    const eatingStart = document.getElementById('cfgEatingStart').value;
+    const eatingEnd = document.getElementById('cfgEatingEnd').value;
+    const longFastDuration = parseInt(document.getElementById('cfgLongFastDuration').value);
+
+    // Kontrola váhy (rozumný rozsah 30-300 kg)
+    if (startWeight < 30 || startWeight > 300) {
+        alert('Startovní váha musí být mezi 30 a 300 kg.');
+        return;
+    }
+    if (targetWeight < 30 || targetWeight > 300) {
+        alert('Cílová váha musí být mezi 30 a 300 kg.');
+        return;
+    }
+
+    // Kontrola časů
+    if (!eatingStart || !eatingEnd) {
+        alert('Vyplňte časy jídla.');
+        return;
+    }
+
+    // Kontrola délky dlouhého půstu (12-72 hodin)
+    if (longFastDuration < 12 || longFastDuration > 72) {
+        alert('Délka dlouhého půstu musí být mezi 12 a 72 hodinami.');
+        return;
+    }
+
+    appConfig.startWeight = startWeight;
+    appConfig.targetWeight = targetWeight;
+    appConfig.eatingStart = eatingStart;
+    appConfig.eatingEnd = eatingEnd;
     appConfig.longFastDay = parseInt(document.getElementById('cfgLongFastDay').value);
-    appConfig.longFastDuration = parseInt(document.getElementById('cfgLongFastDuration').value);
+    appConfig.longFastDuration = longFastDuration;
     appConfig.fastingMode = document.getElementById('cfgFastingMode').value;
     appConfig.userName = document.getElementById('cfgUserName').value;
     appConfig.userMotto = document.getElementById('cfgUserMotto').value;
+    appConfig.waterGlassSize = parseInt(document.getElementById('cfgWaterGlass').value) || 250;
+    appConfig.waterGoal = parseInt(document.getElementById('cfgWaterGoal').value) || 8;
 
     localStorage.setItem('ft_config', JSON.stringify(appConfig));
 
     loadWeightData();
     updateTimer();
+    renderWater();
     syncToCloud();
 
     alert('Uloženo!');
@@ -854,11 +926,66 @@ function renderWater() {
 
     if (!amountEl || !countEl) return;
 
-    // 1 sklenice cca 250ml (0.25l)
-    const liters = (waterIntake * 0.25).toFixed(2);
+    const glassSize = appConfig.waterGlassSize || 250;
+    const goal = appConfig.waterGoal || 8;
+    const liters = (waterIntake * glassSize / 1000).toFixed(2);
+    const progress = Math.min(100, Math.round((waterIntake / goal) * 100));
 
-    amountEl.innerText = `${liters} l`;
+    amountEl.innerText = `${liters} l (${progress}%)`;
     countEl.innerText = waterIntake;
+}
+
+
+// --- STREAK TRACKING ---
+
+function initStreak() {
+    const today = new Date().toDateString();
+
+    // Kontrola přerušení streak (pokud je mezera > 1 den)
+    if (lastStreakDate && lastStreakDate !== today) {
+        const lastDate = new Date(lastStreakDate);
+        const todayDate = new Date(today);
+        const diffDays = Math.floor((todayDate - lastDate) / (1000 * 60 * 60 * 24));
+
+        if (diffDays > 1) {
+            // Přerušení streak
+            currentStreak = 0;
+            localStorage.setItem('ft_streak', '0');
+        }
+    }
+
+    renderStreak();
+}
+
+function updateStreak() {
+    const today = new Date().toDateString();
+
+    // Pokud už dnes byl streak započítán, neincrementovat
+    if (lastStreakDate === today) {
+        return;
+    }
+
+    currentStreak++;
+    lastStreakDate = today;
+
+    // Aktualizovat nejlepší streak
+    if (currentStreak > bestStreak) {
+        bestStreak = currentStreak;
+        localStorage.setItem('ft_streakBest', bestStreak.toString());
+    }
+
+    localStorage.setItem('ft_streak', currentStreak.toString());
+    localStorage.setItem('ft_streakDate', today);
+
+    renderStreak();
+}
+
+function renderStreak() {
+    const countEl = document.getElementById('streakCount');
+    const bestEl = document.getElementById('streakBest');
+
+    if (countEl) countEl.innerText = currentStreak;
+    if (bestEl) bestEl.innerText = bestStreak;
 }
 
 
