@@ -2,10 +2,43 @@
  * MyFastTrack V3 - Kompletní aplikační logika
  */
 
+const APP_VERSION = '1.0.1';
+
 // Registrace Service Workeru
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js').catch(err => console.error('SW Error:', err));
 }
+
+// Vynucená aktualizace aplikace (vymazání cache + reload)
+window.forceAppUpdate = async function() {
+    if (!confirm('Opravdu chcete aktualizovat aplikaci? Stáhne se nová verze.')) return;
+
+    try {
+        // 1. Odregistrovat service worker
+        if ('serviceWorker' in navigator) {
+            const registrations = await navigator.serviceWorker.getRegistrations();
+            for (const registration of registrations) {
+                await registration.unregister();
+            }
+        }
+
+        // 2. Vymazat všechny cache
+        if ('caches' in window) {
+            const cacheNames = await caches.keys();
+            for (const cacheName of cacheNames) {
+                await caches.delete(cacheName);
+            }
+        }
+
+        // 3. Hard reload
+        alert('Cache vymazána. Aplikace se nyní znovu načte.');
+        window.location.reload(true);
+
+    } catch (err) {
+        console.error('Update error:', err);
+        alert('Chyba při aktualizaci: ' + err.message + '\n\nZkuste zavřít a znovu otevřít aplikaci.');
+    }
+};
 
 // Výchozí nastavení
 const defaultConfig = {
@@ -116,6 +149,10 @@ document.addEventListener('DOMContentLoaded', () => {
     syncFromCloud();
 
     window.switchTab('dashboard', document.querySelector('.tab.active'));
+
+    // Zobrazit verzi aplikace
+    const versionEl = document.getElementById('appVersion');
+    if (versionEl) versionEl.innerText = `Verze: ${APP_VERSION}`;
 
     // Modal Close handlers
     document.getElementById('mealEditForm').addEventListener('submit', saveMealEdit);

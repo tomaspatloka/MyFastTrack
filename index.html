@@ -295,6 +295,17 @@
                     <button id="pwaInstallBtn" class="btn-primary full-width">Instalovat aplikaci</button>
                 </div>
 
+                <!-- AKTUALIZACE APLIKACE -->
+                <div class="card">
+                    <h4 class="card-header">Aktualizace</h4>
+                    <p style="margin-bottom: 10px; font-size: 0.9rem; color: #888;">Vynutit stažení nové verze aplikace (vymaže cache).</p>
+                    <button onclick="forceAppUpdate()" class="btn-primary full-width" style="background: #2196F3;">
+                        <span class="material-symbols-outlined" style="vertical-align: middle; margin-right: 5px;">refresh</span>
+                        Aktualizovat aplikaci
+                    </button>
+                    <small id="appVersion" style="display:block; text-align:center; margin-top:10px; color:#666;"></small>
+                </div>
+
             </div>
         </main>
 
