@@ -10,8 +10,11 @@
     <!-- PWA Manifest -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#1e1e1e">
-    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="icon" type="image/svg+xml" href="icon.svg">
+    <link rel="icon" type="image/png" sizes="512x512" href="icon.png">
+    <link rel="apple-touch-icon" href="icon.png">
 
     <!-- Ikony a Fonty -->
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
@@ -31,8 +34,9 @@
         <!-- HLAVIČKA -->
         <header class="app-bar">
             <div class="app-title-wrapper">
-                <span class="material-symbols-outlined app-logo">bolt</span>
+                <span class="material-symbols-outlined app-logo">timer</span>
                 <h1 class="app-title">MyFastTrack</h1>
+                <span class="app-version" id="headerVersion"></span>
             </div>
             <div class="header-actions">
                 <span class="material-symbols-outlined status-icon" id="syncStatusIcon" title="Offline">cloud_off</span>
@@ -48,7 +52,7 @@
                 <div class="card text-center" id="dashboardCard">
                     <div class="status-chip" id="statusBadge">Načítání...</div>
 
-                    <div class="timer-wrapper">
+                    <div class="timer-wrapper" onclick="toggleTimerDisplay()" title="Klikni pro přepnutí">
                         <svg class="timer-svg" viewBox="0 0 100 100">
                             <circle class="timer-bg" cx="50" cy="50" r="45"></circle>
                             <circle class="timer-progress" id="timerCircle" cx="50" cy="50" r="45"></circle>
@@ -56,6 +60,9 @@
                         <div class="timer-text">
                             <span id="timerValue">--:--</span>
                             <small id="timerLabel">načítám</small>
+                            <span class="timer-toggle-hint">
+                                <span class="material-symbols-outlined">swap_vert</span>
+                            </span>
                         </div>
                     </div>
 
@@ -69,6 +76,20 @@
                     </div>
 
                     <p id="subTimerText" class="motivation-text">--</p>
+                </div>
+
+                <!-- STREAK COUNTER -->
+                <div class="card streak-card" id="streakCard">
+                    <div class="streak-content">
+                        <span class="material-symbols-outlined streak-icon">local_fire_department</span>
+                        <div class="streak-info">
+                            <span class="streak-count" id="streakCount">0</span>
+                            <span class="streak-label">dní v řadě</span>
+                        </div>
+                    </div>
+                    <div class="streak-best">
+                        Rekord: <span id="streakBest">0</span> dní
+                    </div>
                 </div>
 
                 <!-- PITNÝ REŽIM -->
@@ -252,6 +273,21 @@
                     </div>
                 </div>
 
+                <!-- PITNÝ REŽIM -->
+                <div class="card">
+                    <h4 class="card-header">Pitný režim</h4>
+                    <div class="input-group">
+                        <div class="form-group" style="flex:1">
+                            <label>Sklenice (ml)</label>
+                            <input type="number" id="cfgWaterGlass" class="form-input" min="100" max="500" step="50">
+                        </div>
+                        <div class="form-group" style="flex:1">
+                            <label>Cíl (sklenic)</label>
+                            <input type="number" id="cfgWaterGoal" class="form-input" min="4" max="20">
+                        </div>
+                    </div>
+                </div>
+
                 <!-- NOTIFIKACE -->
                 <div class="card">
                     <div class="form-group"
@@ -290,6 +326,17 @@
                         plochu pro
                         lepší zážitek.</p>
                     <button id="pwaInstallBtn" class="btn-primary full-width">Instalovat aplikaci</button>
+                </div>
+
+                <!-- AKTUALIZACE APLIKACE -->
+                <div class="card">
+                    <h4 class="card-header">Aktualizace</h4>
+                    <p style="margin-bottom: 10px; font-size: 0.9rem; color: #888;">Vynutit stažení nové verze aplikace (vymaže cache).</p>
+                    <button onclick="forceAppUpdate()" class="btn-primary full-width" style="background: #2196F3;">
+                        <span class="material-symbols-outlined" style="vertical-align: middle; margin-right: 5px;">refresh</span>
+                        Aktualizovat aplikaci
+                    </button>
+                    <small id="appVersion" style="display:block; text-align:center; margin-top:10px; color:#666;"></small>
                 </div>
 
             </div>
