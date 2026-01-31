@@ -2,7 +2,30 @@
  * MyFastTrack V3 - Kompletní aplikační logika
  */
 
-const APP_VERSION = '1.2.0';
+const APP_VERSION = '1.3.0';
+
+// Načtení motivu ihned (před DOMContentLoaded pro zamezení probliknutí)
+(function() {
+    const savedTheme = localStorage.getItem('ft_theme') || 'dark';
+    document.body.classList.remove('dark-mode', 'light-mode');
+    document.body.classList.add(savedTheme + '-mode');
+})();
+
+// Přepínání motivu
+window.toggleTheme = function() {
+    const body = document.body;
+    const isDark = body.classList.contains('dark-mode');
+
+    body.classList.remove('dark-mode', 'light-mode');
+
+    if (isDark) {
+        body.classList.add('light-mode');
+        localStorage.setItem('ft_theme', 'light');
+    } else {
+        body.classList.add('dark-mode');
+        localStorage.setItem('ft_theme', 'dark');
+    }
+};
 
 // Bezpečnostní helper - escapování HTML (prevence XSS)
 function escapeHtml(text) {
