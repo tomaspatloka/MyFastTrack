@@ -2,7 +2,7 @@
  * MyFastTrack V3 - Kompletní aplikační logika
  */
 
-const APP_VERSION = '1.3.0';
+const APP_VERSION = '1.4.0';
 
 // Načtení motivu ihned (před DOMContentLoaded pro zamezení probliknutí)
 (function() {
@@ -339,10 +339,14 @@ function renderTimerUI(isFasting, elapsedMins, totalDuration, statusText) {
     const statusBadge = document.getElementById('statusBadge');
     const phaseContainer = document.getElementById('fastingPhaseContainer');
     const subTimerText = document.getElementById('subTimerText');
+    const endTimeText = document.getElementById('endTimeText');
 
     statusBadge.innerText = statusText;
 
     const remaining = totalDuration - elapsedMins;
+
+    // Vypočítat cílový čas
+    const endTimeInfo = calculateEndTime(isFasting, remaining);
 
     if (isFasting) {
         dashboardCard.className = "card text-center status-fasting";
@@ -369,6 +373,11 @@ function renderTimerUI(isFasting, elapsedMins, totalDuration, statusText) {
             }
         }
         setCircleProgress(elapsedMins, totalDuration, true);
+
+        // Zobrazit kdy končí půst
+        if (endTimeText) {
+            endTimeText.innerText = `Jídlo: ${endTimeInfo}`;
+        }
     } else {
         dashboardCard.className = "card text-center status-eating";
         timerLabel.innerText = "ZBÝVÁ";
@@ -379,7 +388,42 @@ function renderTimerUI(isFasting, elapsedMins, totalDuration, statusText) {
 
         const passed = totalDuration - elapsedMins;
         setCircleProgress(passed, totalDuration, false);
+
+        // Zobrazit kdy začne půst
+        if (endTimeText) {
+            endTimeText.innerText = `Půst: ${endTimeInfo}`;
+        }
     }
+}
+
+// Pomocná funkce: Vypočítat cílový čas
+function calculateEndTime(isFasting, remainingMins) {
+    const now = new Date();
+    const targetTime = new Date(now.getTime() + remainingMins * 60 * 1000);
+
+    const hours = targetTime.getHours().toString().padStart(2, '0');
+    const minutes = targetTime.getMinutes().toString().padStart(2, '0');
+    const timeStr = `${hours}:${minutes}`;
+
+    // Určit den
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const targetDay = new Date(targetTime);
+    targetDay.setHours(0, 0, 0, 0);
+
+    const diffDays = Math.round((targetDay - today) / (1000 * 60 * 60 * 24));
+
+    let dayStr = '';
+    if (diffDays === 0) {
+        dayStr = 'dnes';
+    } else if (diffDays === 1) {
+        dayStr = 'zítra';
+    } else {
+        const days = ['Ne', 'Po', 'Út', 'St', 'Čt', 'Pá', 'So'];
+        dayStr = days[targetTime.getDay()] + ' ' + targetTime.getDate() + '.' + (targetTime.getMonth() + 1) + '.';
+    }
+
+    return `${timeStr} (${dayStr})`;
 }
 
 // Pomocná funkce: Určení fáze půstu

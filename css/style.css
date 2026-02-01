@@ -478,6 +478,25 @@ select.form-input {
     opacity: 1;
 }
 
+/* End Time Info */
+.end-time-info {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 12px;
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 20px;
+    font-size: 0.85rem;
+    color: var(--color-text-dim);
+}
+
+.end-time-info .material-symbols-outlined {
+    font-size: 18px;
+    color: var(--color-primary);
+}
+
 /* Phase Display (NOVÉ) */
 .phase-container {
     background: rgba(255, 255, 255, 0.03);
